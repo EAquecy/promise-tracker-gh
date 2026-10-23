@@ -1,0 +1,115 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Archivo", "Inter", sans-serif;
+
+  --color-gh-green: #006b3f;
+  --color-gh-green-dark: #004d2e;
+  --color-gh-gold: #fcd116;
+  --color-gh-red: #ce1126;
+  --color-ink: #13201a;
+  --color-muted: #4a5650;
+  --color-line: #dde3df;
+  --color-ground: #f4f6f4;
+
+  --color-done: #14633d;
+  --color-done-bg: #e3f3ea;
+  --color-doing: #1a4f94;
+  --color-doing-bg: #e4edfa;
+  --color-stall: #9a4507;
+  --color-stall-bg: #fcebdc;
+  --color-idle: #4a5550;
+  --color-idle-bg: #eceeed;
+}
+
+html,
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+}
+
+a {
+  color: var(--color-gh-green);
+}
+a:hover {
+  color: var(--color-gh-green-dark);
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--color-gh-green);
+  color: #fff !important;
+  border: none;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-gh-green-dark);
+}
+.btn-ghost {
+  background: #fff;
+  color: var(--color-ink) !important;
+  border: 1px solid #c9d2cd;
+}
+.btn-ghost:hover:not(:disabled) {
+  background: #f4f6f4;
+}
+.btn-dark {
+  background: var(--color-ink);
+  color: #fff !important;
+  border: none;
+}
+.btn-gold {
+  background: var(--color-gh-gold);
+  color: var(--color-ink) !important;
+  border: none;
+}
+
+.field {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  border: 1px solid #c9d2cd;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 15px;
+  background: #fff;
+}
+.field:focus {
+  outline: 2px solid var(--color-gh-green);
+  outline-offset: 1px;
+}
+.label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.leaflet-container {
+  font: inherit;
+}
