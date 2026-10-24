@@ -35,7 +35,7 @@ export default function About() {
           </p>
           <h2 className="mt-4 font-display text-2xl font-bold">Data</h2>
           <p>
-            District and region boundaries come from geoBoundaries (CC BY 4.0). Map tiles © OpenStreetMap contributors and CARTO. Profiles marked
+            District and region boundaries come from geoBoundaries (CC BY 4.0). Profiles marked
             &quot;Demo&quot; contain sample data for testing and do not describe real people.
           </p>
         </div>

@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import { MapContainer, GeoJSON, useMap } from "react-leaflet";
 import L from "leaflet";
-import type { Feature, FeatureCollection, Geometry } from "geojson";
+import type { Feature, Geometry } from "geojson";
 import { keptTier } from "@/lib/format";
+import { MAP_BG, useGhanaGeo } from "./useGhanaGeo";
 
 type Props = {
   stats: Record<string, number | null>;
@@ -24,24 +25,18 @@ function FlyTo({ layer }: { layer: L.Layer | null }) {
 }
 
 export default function ExploreMapInner({ stats, selected, onSelect, height = 620 }: Props) {
-  const [districts, setDistricts] = useState<FeatureCollection | null>(null);
-  const [regions, setRegions] = useState<FeatureCollection | null>(null);
+  const { districts, regions } = useGhanaGeo();
   const layers = useRef<Record<string, L.Layer>>({});
   const [selLayer, setSelLayer] = useState<L.Layer | null>(null);
-
-  useEffect(() => {
-    fetch("/geo/districts.json").then((r) => r.json()).then(setDistricts);
-    fetch("/geo/regions.json").then((r) => r.json()).then(setRegions);
-  }, []);
 
   useEffect(() => {
     Object.entries(layers.current).forEach(([name, layer]) => {
       const isSel = name === selected;
       (layer as L.Path).setStyle({
-        weight: isSel ? 3.5 : 0.6,
+        weight: isSel ? 3.5 : 0.7,
         color: isSel ? "#13201A" : "#ffffff",
         fillColor: isSel ? "#FCD116" : keptTier(stats[name]),
-        fillOpacity: isSel ? 0.95 : 0.8,
+        fillOpacity: 1,
       });
       if (isSel) (layer as L.Path).bringToFront();
     });
@@ -50,24 +45,30 @@ export default function ExploreMapInner({ stats, selected, onSelect, height = 62
 
   const style = useMemo(
     () => (f?: Feature<Geometry, { name: string }>) => ({
-      weight: 0.6,
+      weight: 0.7,
       color: "#ffffff",
       fillColor: keptTier(f ? stats[f.properties.name] : null),
-      fillOpacity: 0.8,
+      fillOpacity: 1,
     }),
     [stats]
   );
 
   return (
-    <MapContainer center={[7.95, -1.03]} zoom={7} minZoom={6} scrollWheelZoom style={{ height, width: "100%" }}>
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Boundaries: geoBoundaries'
-        url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
-      />
+    <MapContainer
+      center={[7.95, -1.03]}
+      zoom={7}
+      minZoom={6}
+      maxZoom={12}
+      maxBounds={[[3.5, -4.5], [12, 2.5]]}
+      scrollWheelZoom
+      style={{ height, width: "100%", background: MAP_BG }}
+      attributionControl
+    >
       {districts ? (
         <GeoJSON
           data={districts}
           style={style as L.StyleFunction}
+          attribution="Boundaries: geoBoundaries (CC BY 4.0)"
           onEachFeature={(f, layer) => {
             const name = (f.properties as { name: string }).name;
             layers.current[name] = layer;
