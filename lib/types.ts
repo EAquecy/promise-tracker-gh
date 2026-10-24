@@ -1,4 +1,4 @@
-export type PromiseStatus = "not_started" | "in_progress" | "completed" | "stalled" | "abandoned";
+export type PromiseStatus = "not_started" | "in_progress" | "completed" | "stalled" | "abandoned" | "no_update";
 export type Role = "mp" | "minister" | "deputy_minister" | "regional_minister" | "mmdce" | "assembly_member";
 
 export interface Region {
@@ -40,6 +40,8 @@ export interface Official {
   office_address: string | null;
   status: "pending" | "verified" | "rejected";
   is_demo: boolean;
+  is_public_record: boolean;
+  source_url: string | null;
   created_at: string;
   official_roles?: OfficialRole[];
 }
@@ -53,6 +55,10 @@ export interface PromiseRow {
   source_type: string;
   source_note: string | null;
   source_url: string | null;
+  source_outlet: string | null;
+  status_note: string | null;
+  status_source_url: string | null;
+  added_by: "official" | "research" | "resident";
   made_on: string | null;
   deadline: string | null;
   status: PromiseStatus;
@@ -117,5 +123,6 @@ export interface Scorecard {
   stalled: number;
   not_started: number;
   abandoned: number;
+  no_update: number;
   kept_pct: number;
 }

@@ -7,6 +7,7 @@ import { DemoBadge, Empty, ProgressBar, StatusChip } from "@/components/ui";
 import { PostCard } from "@/components/PostCard";
 import { ShareButton } from "@/components/FollowButton";
 import { AreaMap } from "@/components/maps";
+import { ReportError } from "@/components/ReportError";
 import { getUser } from "@/lib/supabase/server";
 import { POST_SELECT, getViewer, loadPostExtras } from "@/lib/data";
 import { SOURCE_LABEL, STATUS, fmtDate, officialName } from "@/lib/format";
@@ -73,10 +74,18 @@ export default async function PromisePage({ params }: Params) {
               <blockquote className="mt-2.5 text-[17px] leading-relaxed">
                 {promise.quote ? `"${promise.quote}"` : promise.description ?? promise.title}
               </blockquote>
+              {promise.quote && promise.description ? <p className="mt-2.5 text-[15px] leading-normal text-muted">{promise.description}</p> : null}
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
-                <span>{SOURCE_LABEL[promise.source_type] ?? promise.source_type}{promise.source_note ? `: ${promise.source_note}` : ""}</span>
-                {promise.source_url ? <a href={promise.source_url} target="_blank" rel="noreferrer" className="font-semibold">Open source</a> : null}
+                <span>
+                  {promise.added_by === "research" && promise.source_outlet
+                    ? `Reported by ${promise.source_outlet}${promise.made_on ? `, ${fmtDate(promise.made_on)}` : ""}`
+                    : `${SOURCE_LABEL[promise.source_type] ?? promise.source_type}${promise.source_note ? `: ${promise.source_note}` : ""}`}
+                </span>
+                {promise.source_url ? <a href={promise.source_url} target="_blank" rel="noreferrer" className="font-semibold">Read the source</a> : null}
               </div>
+              {promise.added_by === "research" ? (
+                <p className="mt-2 text-[13px] text-muted">Added by Promise Tracker GH from public reporting. The official has not confirmed it here.</p>
+              ) : null}
             </figure>
             <div className="flex flex-[1_1_300px] flex-wrap content-start gap-3">
               {[
@@ -96,6 +105,15 @@ export default async function PromisePage({ params }: Params) {
 
         <div className="mt-7 flex flex-wrap items-start gap-7">
           <section aria-label="Evidence timeline" className="min-w-0 flex-[999_1_560px]">
+            {promise.status_note ? (
+              <div className="card mb-6 p-5">
+                <div className="text-xs font-semibold uppercase tracking-[0.06em] text-[#5B6660]">Latest status</div>
+                <p className="mt-2 text-base leading-relaxed">{promise.status_note}</p>
+                {promise.status_source_url ? (
+                  <a href={promise.status_source_url} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-semibold">Read the source</a>
+                ) : null}
+              </div>
+            ) : null}
             <h2 className="font-display text-[22px] font-bold">Evidence timeline</h2>
             <p className="mt-1.5 text-sm text-muted">Each stage is posted by the official. Residents confirm or dispute what they see.</p>
             {posts.length ? (
@@ -121,7 +139,12 @@ export default async function PromisePage({ params }: Params) {
                 })}
               </ol>
             ) : (
-              <div className="mt-5"><Empty>No evidence posted for this promise yet. Residents can still discuss it below on the official&apos;s next update.</Empty></div>
+              <div className="mt-5">
+                <Empty>
+                  No evidence posted for this promise yet. Seen progress on the ground? Use &quot;Report an error&quot; with a link or photo, and the official
+                  can post updates once they claim their profile.
+                </Empty>
+              </div>
             )}
           </section>
 
@@ -154,6 +177,14 @@ export default async function PromisePage({ params }: Params) {
                   <a href={`https://www.google.com/maps/dir/?api=1&destination=${pin.lat},${pin.lng}`} target="_blank" rel="noreferrer" className="text-sm font-semibold">Get directions to visit the site</a>
                 </div>
               ) : null}
+            </section>
+
+            <section aria-label="Corrections" className="card p-5">
+              <h2 className="font-display text-xl font-bold">Something wrong?</h2>
+              <p className="mt-2 text-sm leading-normal text-muted">If this promise, its source or its status is inaccurate, tell us and we will check it.</p>
+              <div className="mt-3">
+                <ReportError promiseId={promise.id} officialId={promise.official_id} userId={user?.id ?? null} />
+              </div>
             </section>
 
             <section aria-label="Share" className="rounded-[14px] bg-ink p-5 text-white">

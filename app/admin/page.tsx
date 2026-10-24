@@ -28,6 +28,25 @@ async function setOfficialStatus(formData: FormData) {
   revalidatePath("/admin");
 }
 
+async function claimProfile(formData: FormData) {
+  "use server";
+  const supabase = await requireAdmin();
+  const pending = String(formData.get("pending"));
+  const target = String(formData.get("target"));
+  if (!target) return;
+  await supabase.rpc("admin_claim_profile", { pending_id: pending, target_id: target });
+  revalidatePath("/admin");
+}
+
+async function setCorrection(formData: FormData) {
+  "use server";
+  const supabase = await requireAdmin();
+  const status = String(formData.get("status"));
+  if (!["fixed", "dismissed"].includes(status)) return;
+  await supabase.from("corrections").update({ status }).eq("id", String(formData.get("id")));
+  revalidatePath("/admin");
+}
+
 async function setPromiseApproval(formData: FormData) {
   "use server";
   const supabase = await requireAdmin();
@@ -40,10 +59,16 @@ async function setPromiseApproval(formData: FormData) {
 
 export default async function AdminPage() {
   const supabase = await requireAdmin();
-  const [{ data: pending }, { data: promises }] = await Promise.all([
+  const [{ data: pending }, { data: promises }, { data: unclaimed }, { data: corrections }] = await Promise.all([
     supabase.from("officials").select(OFFICIAL_SELECT + ", official_documents(*)").eq("status", "pending").order("created_at"),
     supabase.from("promises").select("*, officials(title, full_name)").eq("approved", false).order("created_at"),
+    supabase.from("officials").select("id, full_name, official_roles(label)").eq("is_public_record", true).is("user_id", null).order("full_name"),
+    supabase.from("corrections").select("*, promises(id, title), officials(id, title, full_name)").eq("status", "open").order("created_at"),
   ]);
+  type Unclaimed = { id: string; full_name: string; official_roles: { label: string | null }[] };
+  type Corr = { id: string; body: string; link: string | null; created_at: string; promises: { id: string; title: string } | null; officials: { id: string; title: string | null; full_name: string } | null };
+  const unclaimedList = (unclaimed ?? []) as Unclaimed[];
+  const corr = (corrections ?? []) as Corr[];
   const officials = (pending ?? []) as unknown as (Official & { official_documents: { id: number; path: string; label: string | null }[] })[];
   const docLinks: Record<string, string> = {};
   for (const o of officials) {
@@ -98,9 +123,55 @@ export default async function AdminPage() {
                   )}
                   {!o.official_documents.length ? <span className="text-sm text-stall">No documents uploaded</span> : null}
                 </div>
+                {unclaimedList.length ? (
+                  <form action={claimProfile} className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4">
+                    <input type="hidden" name="pending" value={o.id} />
+                    <div className="min-w-0 flex-[1_1_320px]">
+                      <label htmlFor={`t-${o.id}`} className="label">Already has a public record profile? Approve and link it</label>
+                      <select id={`t-${o.id}`} name="target" className="field" defaultValue={unclaimedList.find((u) => u.full_name.toLowerCase() === o.full_name.toLowerCase())?.id ?? ""}>
+                        <option value="">Choose profile…</option>
+                        {unclaimedList.map((u) => (
+                          <option key={u.id} value={u.id}>{u.full_name} · {u.official_roles[0]?.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <button className="btn btn-dark">Approve and link</button>
+                  </form>
+                ) : null}
               </article>
             ))}
             {!officials.length ? <Empty>No officials waiting.</Empty> : null}
+          </div>
+        </section>
+
+        <section className="mt-10">
+          <h2 className="font-display text-[22px] font-bold">Reported errors ({corr.length})</h2>
+          <div className="mt-4 flex flex-col gap-3">
+            {corr.map((c) => (
+              <article key={c.id} className="card flex flex-wrap items-start justify-between gap-3 p-4">
+                <div className="min-w-0 flex-[1_1_400px]">
+                  <div className="text-sm text-muted">
+                    {fmtDate(c.created_at)} ·{" "}
+                    {c.promises ? <a href={`/promises/${c.promises.id}`}>{c.promises.title}</a> : c.officials ? <a href={`/officials/${c.officials.id}`}>{officialName(c.officials)}</a> : "General"}
+                  </div>
+                  <p className="mt-1.5 whitespace-pre-line text-[15px]">{c.body}</p>
+                  {c.link ? <a href={c.link} target="_blank" rel="noreferrer" className="text-sm font-semibold">Evidence link</a> : null}
+                </div>
+                <div className="flex gap-2">
+                  <form action={setCorrection}>
+                    <input type="hidden" name="id" value={c.id} />
+                    <input type="hidden" name="status" value="fixed" />
+                    <button className="btn btn-primary">Mark fixed</button>
+                  </form>
+                  <form action={setCorrection}>
+                    <input type="hidden" name="id" value={c.id} />
+                    <input type="hidden" name="status" value="dismissed" />
+                    <button className="btn btn-ghost">Dismiss</button>
+                  </form>
+                </div>
+              </article>
+            ))}
+            {!corr.length ? <Empty>No open reports.</Empty> : null}
           </div>
         </section>
 

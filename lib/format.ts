@@ -6,6 +6,7 @@ export const STATUS: Record<PromiseStatus, { label: string; bg: string; fg: stri
   stalled: { label: "Stalled", bg: "#FCEBDC", fg: "#9A4507", bar: "#C25E12" },
   not_started: { label: "Not started", bg: "#ECEEED", fg: "#4A5550", bar: "#9AA39E" },
   abandoned: { label: "Abandoned", bg: "#F9E0E3", fg: "#8E1B26", bar: "#B3263A" },
+  no_update: { label: "No update yet", bg: "#EEF1F6", fg: "#48536A", bar: "#B7BFCC" },
 };
 
 export const ROLE_LABEL: Record<Role, string> = {

@@ -31,7 +31,11 @@ export function OfficialCard({ o, score }: { o: Official; score?: Scorecard }) {
         <div className="mt-2.5 flex items-center gap-2 text-[13px] text-muted">
           <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: keptTier(score?.kept_pct) }} />
           {score?.total ?? 0} promises tracked
-          {o.is_demo ? <span className="ml-auto font-semibold text-[#5A4300]">Demo</span> : null}
+          {o.is_demo ? (
+            <span className="ml-auto font-semibold text-[#5A4300]">Demo</span>
+          ) : o.is_public_record && !o.user_id ? (
+            <span className="ml-auto font-semibold text-[#48536A]">Public record</span>
+          ) : null}
         </div>
       </div>
     </Link>

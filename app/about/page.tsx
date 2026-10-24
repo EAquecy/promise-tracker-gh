@@ -19,6 +19,12 @@ export default function About() {
             Officials sign up and upload proof of office, such as the Electoral Commission declaration of results, a gazette notice or an appointment
             letter. Our team checks it before the profile goes live. New promises added by officials are checked against a manifesto or recording.
           </p>
+          <h2 className="mt-4 font-display text-2xl font-bold">Public record profiles</h2>
+          <p>
+            Some profiles are compiled by our team before the official joins. We only add a promise when a news outlet, an official document or the
+            official&apos;s own channel attributes it to them, and every promise links to that source. Where we cannot find public evidence of progress,
+            the promise shows &quot;No update yet&quot; rather than a guess. Officials can claim their profile at any time, and anyone can report an error.
+          </p>
           <h2 className="mt-4 font-display text-2xl font-bold">Evidence</h2>
           <p>
             Photos taken with the in app camera carry the time and the device location. Photos uploaded from a gallery are marked as not verified. Posts

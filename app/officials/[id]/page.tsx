@@ -92,7 +92,9 @@ export default async function OfficialPage({ params, searchParams }: Params) {
           <div className="min-w-0 flex-[999_1_420px] pb-1.5">
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="font-display text-[34px] font-extrabold leading-tight md:text-[38px]">{name}</h1>
-              {official.status === "verified" ? (
+              {official.is_public_record && !official.user_id ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EEF1F6] px-2.5 py-1.5 text-[13px] font-semibold text-[#48536A]">Public record profile</span>
+              ) : official.status === "verified" ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-doing-bg px-2.5 py-1.5 text-[13px] font-semibold text-doing">Verified official</span>
               ) : (
                 <span className="rounded-full bg-stall-bg px-2.5 py-1.5 text-[13px] font-semibold text-stall">Awaiting verification</span>
@@ -121,6 +123,16 @@ export default async function OfficialPage({ params, searchParams }: Params) {
           </div>
         </section>
 
+        {official.is_public_record && !official.user_id ? (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#D5DBE6] bg-[#F5F7FA] px-4 py-3.5 text-[15px] leading-normal">
+            <p className="min-w-0 flex-[1_1_420px]">
+              Compiled by Promise Tracker GH from news reports and official sources. Every promise links to where it was reported.
+              {name} has not yet claimed this profile.
+            </p>
+            <Link href="/official/login" className="btn btn-ghost">Is this you? Claim this profile</Link>
+          </div>
+        ) : null}
+
         <section aria-label="Promise scorecard" className="card mt-8 p-6">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-display text-[22px] font-bold">Promise scorecard</h2>
@@ -131,7 +143,7 @@ export default async function OfficialPage({ params, searchParams }: Params) {
               <div className="font-display text-4xl font-extrabold">{score?.kept_pct ?? 0}%</div>
               <div className="text-sm text-muted">Kept so far</div>
             </div>
-            {(["completed", "in_progress", "stalled", "not_started"] as PromiseStatus[]).map((s) => (
+            {(["completed", "in_progress", "stalled", "not_started", "no_update"] as PromiseStatus[]).filter((s) => s !== "no_update" || (score?.no_update ?? 0) > 0).map((s) => (
               <div key={s} className="flex-[1_1_120px] rounded-[10px] p-4" style={{ background: STATUS[s].bg, color: STATUS[s].fg }}>
                 <div className="font-display text-4xl font-extrabold">{score?.[s] ?? 0}</div>
                 <div className="text-sm font-medium">{STATUS[s].label}</div>
@@ -140,7 +152,7 @@ export default async function OfficialPage({ params, searchParams }: Params) {
           </div>
           {total ? (
             <div role="img" aria-label={`${score?.completed} completed, ${score?.in_progress} in progress, ${score?.stalled} stalled, ${score?.not_started} not started`} className="mt-5 flex h-3 gap-0.5 overflow-hidden rounded-md">
-              {(["completed", "in_progress", "stalled", "not_started", "abandoned"] as PromiseStatus[]).map((s) =>
+              {(["completed", "in_progress", "stalled", "not_started", "abandoned", "no_update"] as PromiseStatus[]).map((s) =>
                 score?.[s] ? <div key={s} style={{ flex: score[s], background: STATUS[s].bar }} /> : null
               )}
             </div>
@@ -173,7 +185,14 @@ export default async function OfficialPage({ params, searchParams }: Params) {
                       <div className="min-w-0 flex-[1_1_300px]">
                         <div className="text-xs font-semibold uppercase tracking-[0.06em] text-[#5B6660]">{p.category}</div>
                         <h3 className="mt-1 text-lg font-semibold leading-snug">{p.title}</h3>
-                        <div className="mt-1.5 text-sm text-muted">Source: {p.source_note ?? p.source_type}</div>
+                        <div className="mt-1.5 text-sm text-muted">
+                          Source:{" "}
+                          {p.source_url ? (
+                            <a href={p.source_url} target="_blank" rel="noreferrer">{p.source_note ?? p.source_outlet ?? "link"}</a>
+                          ) : (
+                            p.source_note ?? p.source_type
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {!p.approved ? <span className="rounded-full bg-[#FFF3C4] px-2.5 py-1 text-xs font-semibold text-[#5A4300]">Being checked</span> : null}
@@ -185,9 +204,11 @@ export default async function OfficialPage({ params, searchParams }: Params) {
                     </div>
                     <div className="mt-3 flex flex-wrap justify-between gap-x-4 gap-y-2 text-sm text-muted">
                       <span>
-                        {promiseUpdateCounts[p.id] ?? 0} evidence posts · updated {timeAgo(p.updated_at)}
+                        {p.status_note
+                          ? p.status_note.length > 110 ? p.status_note.slice(0, 108) + "…" : p.status_note
+                          : `${promiseUpdateCounts[p.id] ?? 0} evidence posts · updated ${timeAgo(p.updated_at)}`}
                       </span>
-                      <Link href={`/promises/${p.id}`} className="font-semibold">View evidence</Link>
+                      <Link href={`/promises/${p.id}`} className="font-semibold">Details</Link>
                     </div>
                   </article>
                 ))}
