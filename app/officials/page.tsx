@@ -18,6 +18,7 @@ export default async function OfficialsPage({ searchParams }: { searchParams: Pr
     .from("officials")
     .select(role || region ? OFFICIAL_SELECT.replace("official_roles(", "official_roles!inner(") : OFFICIAL_SELECT)
     .eq("status", "verified")
+    .order("is_demo")
     .order("full_name")
     .limit(60);
   if (q) query = query.ilike("full_name", `%${q.replace(/[%_,()]/g, " ")}%`);

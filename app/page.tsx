@@ -31,6 +31,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ r
       .select(OFFICIAL_SELECT.replace("official_roles(", "official_roles!inner("))
       .eq("status", "verified")
       .in("official_roles.role", roleFilter)
+      .order("is_demo")
+      .order("full_name")
       .limit(8),
     supabase
       .from("posts")
