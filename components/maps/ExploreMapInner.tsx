@@ -16,10 +16,15 @@ type Props = {
 function FlyTo({ layer }: { layer: L.Layer | null }) {
   const map = useMap();
   useEffect(() => {
-    if (layer && "getBounds" in layer) {
-      const b = (layer as L.Polygon).getBounds();
-      if (b.isValid()) map.flyToBounds(b, { maxZoom: 10, duration: 0.6, padding: [40, 40] });
-    }
+    if (!layer || typeof (layer as L.Polygon).getBounds !== "function") return;
+    const b = (layer as L.Polygon).getBounds();
+    if (!b.isValid()) return;
+    // wait a frame so the container has its final size, then zoom so even small districts fill the view
+    const t = window.setTimeout(() => {
+      map.invalidateSize();
+      map.fitBounds(b, { maxZoom: 11, padding: [60, 60], animate: true });
+    }, 50);
+    return () => window.clearTimeout(t);
   }, [layer, map]);
   return null;
 }
@@ -40,7 +45,9 @@ export default function ExploreMapInner({ stats, selected, onSelect, height = 62
       });
       if (isSel) (layer as L.Path).bringToFront();
     });
-    setSelLayer(selected ? layers.current[selected] ?? null : null);
+    // layers are registered once the GeoJSON has rendered; pick the selected one up then
+    const id = window.setTimeout(() => setSelLayer(selected ? layers.current[selected] ?? null : null), 0);
+    return () => window.clearTimeout(id);
   }, [selected, stats, districts]);
 
   const style = useMemo(
@@ -58,7 +65,7 @@ export default function ExploreMapInner({ stats, selected, onSelect, height = 62
       center={[7.95, -1.03]}
       zoom={7}
       minZoom={6}
-      maxZoom={12}
+      maxZoom={13}
       maxBounds={[[3.5, -4.5], [12, 2.5]]}
       scrollWheelZoom
       style={{ height, width: "100%", background: MAP_BG }}
