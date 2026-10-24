@@ -69,13 +69,17 @@ export function ExploreClient({
     window.history.replaceState(null, "", url.toString());
   }, [sel]);
 
+  const PAGE = 15;
+  const [limit, setLimit] = useState(PAGE);
+  const [onlyActive, setOnlyActive] = useState(false);
   const list = useMemo(() => {
     const t = query.trim().toLowerCase();
     return stats
-      .filter((s) => (region === "" || s.region_id === region) && (!t || s.name.toLowerCase().includes(t)))
-      .sort((a, b) => b.promises - a.promises || a.name.localeCompare(b.name))
-      .slice(0, 40);
-  }, [stats, query, region]);
+      .filter((s) => (region === "" || s.region_id === region) && (!t || s.name.toLowerCase().includes(t)) && (!onlyActive || s.officials > 0))
+      .sort((a, b) => b.officials - a.officials || b.promises - a.promises || a.name.localeCompare(b.name));
+  }, [stats, query, region, onlyActive]);
+  useEffect(() => setLimit(PAGE), [query, region, onlyActive]);
+  const shown = list.slice(0, limit);
 
   return (
     <main className="mx-auto max-w-[1280px] px-6 pb-16 pt-7">
@@ -170,8 +174,18 @@ export function ExploreClient({
             </section>
           ) : null}
 
-          <section aria-label="Districts" className="card p-2">
-            {list.map((s) => {
+          <section aria-label="Districts" className="card flex max-h-[460px] flex-col overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+              <span className="text-sm font-semibold">
+                {list.length} {list.length === 1 ? "area" : "areas"}
+              </span>
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-muted">
+                <input type="checkbox" checked={onlyActive} onChange={(e) => setOnlyActive(e.target.checked)} className="h-4 w-4 accent-gh-green" />
+                Only areas with officials
+              </label>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto p-2">
+            {shown.map((s) => {
               const on = s.name === selected;
               return (
                 <button
@@ -191,6 +205,12 @@ export function ExploreClient({
               );
             })}
             {!list.length ? <p className="p-3 text-sm text-muted">No districts match.</p> : null}
+            {list.length > limit ? (
+              <button type="button" onClick={() => setLimit((l) => l + PAGE)} className="btn btn-ghost mt-1 w-full">
+                Show {Math.min(PAGE, list.length - limit)} more
+              </button>
+            ) : null}
+            </div>
           </section>
         </aside>
       </div>

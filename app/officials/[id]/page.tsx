@@ -85,11 +85,13 @@ export default async function OfficialPage({ params, searchParams }: Params) {
   return (
     <>
       <Header />
-      <div role="img" aria-label="Line drawing of Parliament House with the coat of arms" className="h-[220px] bg-gh-green bg-cover bg-bottom md:h-[340px]" style={{ backgroundImage: "url(/cover-parliament.svg)" }} />
+      <div role="img" aria-label="Line drawing of Parliament House with the coat of arms" className="h-[180px] bg-gh-green bg-cover bg-center md:h-[300px]" style={{ backgroundImage: "url(/cover-parliament.svg)" }} />
       <main className="mx-auto max-w-[1200px] px-6 pb-16">
-        <section aria-label="Profile" className="relative -mt-[84px] flex flex-wrap items-end gap-x-7 gap-y-5">
-          <Avatar name={official.full_name} photo={official.photo_path} size={168} ring />
-          <div className="min-w-0 flex-[999_1_420px] pb-1.5">
+        <section aria-label="Profile" className="relative flex flex-wrap items-start gap-x-7 gap-y-4">
+          <div className="-mt-[72px] md:-mt-[96px]">
+            <Avatar name={official.full_name} photo={official.photo_path} size={168} ring />
+          </div>
+          <div className="min-w-0 flex-[999_1_420px] pt-5">
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="font-display text-[34px] font-extrabold leading-tight md:text-[38px]">{name}</h1>
               {official.is_public_record && !official.user_id ? (
@@ -117,7 +119,7 @@ export default async function OfficialPage({ params, searchParams }: Params) {
               {area?.term_start ? <span>Term: {fmtDate(area.term_start, { month: "short", year: "numeric" })} to {area.term_end ? fmtDate(area.term_end, { month: "short", year: "numeric" }) : "present"}</span> : null}
             </div>
           </div>
-          <div className="flex gap-2.5 pb-1.5">
+          <div className="flex gap-2.5 pt-5">
             <FollowButton officialId={id} userId={user?.id ?? null} initial={!!followRes.data} />
             <ShareButton title={name} />
           </div>
