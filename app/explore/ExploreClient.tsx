@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ExploreMap } from "@/components/maps";
 import { createClient } from "@/lib/supabase/client";
 import { keptTier, officialName } from "@/lib/format";
+import { getFix } from "@/lib/geo";
 
 export interface DistrictStat {
   district_id: number;
@@ -23,11 +24,13 @@ export function ExploreClient({
   regions,
   initialQuery,
   initialDistrict,
+  knownHome,
 }: {
   stats: DistrictStat[];
   regions: { id: number; name: string }[];
   initialQuery: string;
   initialDistrict: number | null;
+  knownHome: number | null;
 }) {
   const byName = useMemo(() => Object.fromEntries(stats.map((s) => [s.name, s])), [stats]);
   const pctByName = useMemo(() => Object.fromEntries(stats.map((s) => [s.name, s.kept_pct])), [stats]);
@@ -41,6 +44,7 @@ export function ExploreClient({
   const initial =
     (initialDistrict && stats.find((s) => s.district_id === initialDistrict)) ||
     firstMatch(initialQuery) ||
+    (knownHome && stats.find((s) => s.district_id === knownHome)) ||
     stats.filter((s) => s.officials > 0).sort((a, b) => b.promises - a.promises)[0] ||
     null;
 
@@ -49,6 +53,43 @@ export function ExploreClient({
   const [selected, setSelected] = useState<string | null>(initial?.name ?? null);
   const [people, setPeople] = useState<RoleRow[] | null>(null);
   const sel = selected ? byName[selected] : null;
+  const [myDistrict, setMyDistrict] = useState<number | null>(knownHome);
+  const [locating, setLocating] = useState(false);
+  const explicit = !!initialDistrict || !!initialQuery.trim();
+  const picked = useRef(false);
+  const pick = (name: string) => {
+    picked.current = true;
+    setSelected(name);
+  };
+
+  // Open on the visitor's own district when the device shares its location.
+  async function locate(force: boolean) {
+    setLocating(true);
+    try {
+      const fix = await getFix();
+      const { data } = await createClient().rpc("locate_area", { lat: fix.lat, lng: fix.lng });
+      const id = (data as { district_id: number | null }[] | null)?.[0]?.district_id ?? null;
+      if (id) {
+        setMyDistrict(id);
+        const d = stats.find((x) => x.district_id === id);
+        if (d && (force || (!explicit && !picked.current))) setSelected(d.name);
+      }
+    } catch {
+      /* location off: keep the current view */
+    } finally {
+      setLocating(false);
+    }
+  }
+  useEffect(() => {
+    const ask = () => locate(false);
+    if (navigator.permissions?.query) {
+      navigator.permissions
+        .query({ name: "geolocation" as PermissionName })
+        .then((p) => (p.state !== "denied" ? ask() : undefined))
+        .catch(ask);
+    } else ask();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!sel) return;
@@ -88,7 +129,22 @@ export function ExploreClient({
           <h1 className="font-display text-[34px] font-extrabold">Explore Ghana</h1>
           <p className="mt-1.5 text-[15px] text-muted">See what is happening in any of Ghana&apos;s 261 districts. Tap an area on the map or search.</p>
         </div>
-        <Link href="/my-area" className="btn btn-ghost rounded-full">Back to my area</Link>
+        {myDistrict ? (
+          <button
+            type="button"
+            className="btn btn-ghost rounded-full"
+            onClick={() => {
+              const d = stats.find((x) => x.district_id === myDistrict);
+              if (d) pick(d.name);
+            }}
+          >
+            Back to my district
+          </button>
+        ) : (
+          <button type="button" className="btn btn-ghost rounded-full" onClick={() => locate(true)} disabled={locating}>
+            {locating ? "Finding you…" : "Use my location"}
+          </button>
+        )}
       </div>
 
       <form
@@ -96,7 +152,7 @@ export function ExploreClient({
         onSubmit={(e) => {
           e.preventDefault();
           const m = firstMatch(query);
-          if (m) setSelected(m.name);
+          if (m) pick(m.name);
         }}
       >
         <label htmlFor="sq" className="sr-only">Search a district or town</label>
@@ -113,7 +169,7 @@ export function ExploreClient({
 
       <div className="mt-5 flex flex-wrap items-start gap-6">
         <section aria-label="Map" className="card min-w-0 flex-[999_1_520px] overflow-hidden">
-          <ExploreMap stats={pctByName} selected={selected} onSelect={setSelected} height={620} />
+          <ExploreMap stats={pctByName} selected={selected} onSelect={pick} height={620} />
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5 px-5 py-3.5 text-[13px] text-[#3E4A44]">
             <strong className="font-semibold">Promises kept</strong>
             {[
@@ -141,6 +197,9 @@ export function ExploreClient({
                 {sel.kind === "metropolitan" ? "Metropolitan assembly" : sel.kind === "municipal" ? "Municipal assembly" : "District assembly"} · {regionName[sel.region_id]}
               </div>
               <h2 className="mt-1 font-display text-2xl font-bold">{sel.name}</h2>
+              {sel.district_id === myDistrict ? (
+                <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-done-bg px-2.5 py-1 text-xs font-semibold text-done">Your district</span>
+              ) : null}
               <div className="mt-3.5 flex flex-wrap gap-3">
                 {[
                   [sel.kept_pct != null ? `${sel.kept_pct}%` : "–", "Kept"],
@@ -191,7 +250,7 @@ export function ExploreClient({
                 <button
                   key={s.district_id}
                   type="button"
-                  onClick={() => setSelected(s.name)}
+                  onClick={() => pick(s.name)}
                   aria-pressed={on}
                   className={`flex min-h-[52px] w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left ${on ? "bg-[#EEF7F1]" : "hover:bg-ground"}`}
                 >
