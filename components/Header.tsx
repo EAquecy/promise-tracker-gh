@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getUser } from "@/lib/supabase/server";
 import { FlagStripe, StarMark } from "./ui";
+import { LocationPrompt } from "./LocationPrompt";
 
 export async function Header({ variant = "light" }: { variant?: "light" | "dark" | "official" }) {
   const { supabase, user } = await getUser();
@@ -42,6 +43,7 @@ export async function Header({ variant = "light" }: { variant?: "light" | "dark"
         </div>
       </header>
       <FlagStripe />
+      <LocationPrompt />
     </>
   );
 }

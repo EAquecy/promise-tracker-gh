@@ -4,7 +4,34 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { publicUrl } from "@/lib/supabase/env";
 import { fmtDate, initials, timeAgo } from "@/lib/format";
+import { getFix, locationMessage } from "@/lib/geo";
+import { COMMENT_SELECT } from "@/lib/data";
 import type { Comment, Post, PostStats } from "@/lib/types";
+
+// "Receipts": where the commenter was first located, where they commented from, and whether that is inside the official's area.
+function CommentReceipt({ c }: { c: Comment }) {
+  if (c.official_id || (!c.origin && !c.located)) return null;
+  const origin = c.origin?.name;
+  const here = c.located?.name;
+  const moved = origin && here && origin !== here;
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-black/5 pt-2 text-xs text-muted">
+      {c.is_local ? (
+        <span className="rounded-full bg-done-bg px-2 py-0.5 font-semibold text-done">Local</span>
+      ) : (
+        <span className="rounded-full bg-[#FFF3C4] px-2 py-0.5 font-semibold text-[#5A4300]">Outside this area</span>
+      )}
+      {moved ? (
+        <>
+          <span>From <strong className="text-ink">{origin}</strong></span>
+          <span>Commented from <strong className="text-ink">{here}</strong></span>
+        </>
+      ) : (
+        <span>Lives in <strong className="text-ink">{here ?? origin}</strong></span>
+      )}
+    </div>
+  );
+}
 
 export interface Viewer {
   id: string;
@@ -49,19 +76,25 @@ export function PostCard({
     setErr(null);
     const prev = verdict;
     const next = prev === v ? null : v;
-    setVerdict(next);
-    setCounts((c) => {
-      const n = { ...c };
-      if (prev === "confirm") n.confirms--;
-      if (prev === "dispute") n.disputes--;
-      if (next === "confirm") n.confirms++;
-      if (next === "dispute") n.disputes++;
-      return n;
-    });
-    const res = next
-      ? await supabase.from("reactions").upsert({ post_id: post.id, user_id: viewer.id, verdict: next })
-      : await supabase.from("reactions").delete().eq("post_id", post.id).eq("user_id", viewer.id);
-    if (res.error) setErr("Could not save your response. Please try again.");
+    setBusy(true);
+    try {
+      const fix = next ? await getFix() : { lat: 0, lng: 0 };
+      const { error } = await supabase.rpc("react_to_post", { pid: post.id, v: next, lat: fix.lat, lng: fix.lng });
+      if (error) throw error;
+      setVerdict(next);
+      setCounts((c) => {
+        const n = { ...c };
+        if (prev === "confirm") n.confirms--;
+        if (prev === "dispute") n.disputes--;
+        if (next === "confirm") n.confirms++;
+        if (next === "dispute") n.disputes++;
+        return n;
+      });
+    } catch (e) {
+      setErr(locationMessage(e));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function addComment(e: React.FormEvent) {
@@ -69,19 +102,19 @@ export function PostCard({
     if (!viewer || !text.trim()) return;
     setBusy(true);
     setErr(null);
-    const row = {
-      post_id: post.id,
-      author_id: viewer.id,
-      author_name: viewer.name,
-      official_id: isOwnOfficial ? viewer.officialId : null,
-      verdict: isOwnOfficial ? null : verdict,
-      body: text.trim(),
-    };
-    const { data, error } = await supabase.from("comments").insert(row).select().single();
-    setBusy(false);
-    if (error) return setErr("Could not post your comment.");
-    setComments((c) => [...c, data as Comment]);
-    setText("");
+    try {
+      const fix = isOwnOfficial ? { lat: 0, lng: 0 } : await getFix();
+      const { data, error } = await supabase.rpc("comment_on_post", { pid: post.id, body: text.trim(), v: verdict, lat: fix.lat, lng: fix.lng });
+      if (error) throw error;
+      const row = data as Comment;
+      const { data: full } = await supabase.from("comments").select(COMMENT_SELECT).eq("id", row.id).single();
+      setComments((c) => [...c, (full ?? row) as Comment]);
+      setText("");
+    } catch (e2) {
+      setErr(locationMessage(e2));
+    } finally {
+      setBusy(false);
+    }
   }
 
   const photos = (post.post_media ?? []).filter((m) => m.kind === "photo");
@@ -150,6 +183,7 @@ export function PostCard({
         <button
           type="button"
           onClick={() => react("confirm")}
+          disabled={busy}
           aria-pressed={verdict === "confirm"}
           className="btn"
           style={{ background: verdict === "confirm" ? "#1B7A4B" : "#E3F3EA", color: verdict === "confirm" ? "#fff" : "#14633D", border: "1px solid #B9DCC8" }}
@@ -159,6 +193,7 @@ export function PostCard({
         <button
           type="button"
           onClick={() => react("dispute")}
+          disabled={busy}
           aria-pressed={verdict === "dispute"}
           className="btn"
           style={{ background: verdict === "dispute" ? "#9A4507" : "#FCEBDC", color: verdict === "dispute" ? "#fff" : "#9A4507", border: "1px solid #F0CDB0" }}
@@ -169,7 +204,14 @@ export function PostCard({
           Comments · {comments.length}
         </button>
       </div>
-      {err ? <p className="mt-2 text-sm text-gh-red">{err}</p> : null}
+      {stats && (stats.local_confirms || stats.local_disputes || stats.outside_reactions) ? (
+        <p className="mt-2.5 text-[13px] text-muted">
+          From people in this area: <strong className="text-done">{stats.local_confirms} confirm</strong> ·{" "}
+          <strong className="text-stall">{stats.local_disputes} dispute</strong>
+          {stats.outside_reactions ? <> · {stats.outside_reactions} responses from outside the area</> : null}
+        </p>
+      ) : null}
+      {err ? <p className="mt-2 text-sm text-gh-red" role="alert">{err}</p> : null}
 
       {open ? (
         <div className="mt-4 flex flex-col gap-3.5">
@@ -189,6 +231,7 @@ export function PostCard({
                   <span className="text-muted">{timeAgo(c.created_at)}</span>
                 </div>
                 <p className="mt-1.5 whitespace-pre-line text-[15px] leading-normal">{c.body}</p>
+                <CommentReceipt c={c} />
               </div>
             </div>
           ))}
@@ -204,7 +247,8 @@ export function PostCard({
                 onChange={(e) => setText(e.target.value)}
                 placeholder={isOwnOfficial ? "Reply officially to residents" : "Live nearby? Say what you have seen."}
               />
-              <div className="flex justify-end">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs text-muted">{isOwnOfficial ? "Posted as an official response." : "Your district (not your exact location) is shown with your comment."}</span>
                 <button className="btn btn-primary" disabled={busy || !text.trim()}>
                   {isOwnOfficial ? "Post official reply" : "Post comment"}
                 </button>

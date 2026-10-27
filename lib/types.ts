@@ -102,6 +102,9 @@ export interface PostStats {
   confirms: number;
   disputes: number;
   comment_count: number;
+  local_confirms: number;
+  local_disputes: number;
+  outside_reactions: number;
 }
 export interface Comment {
   id: string;
@@ -114,6 +117,11 @@ export interface Comment {
   body: string;
   created_at: string;
   is_demo: boolean;
+  is_local: boolean | null;
+  origin_district_id: number | null;
+  located_district_id: number | null;
+  origin?: { name: string } | null;
+  located?: { name: string } | null;
 }
 export interface Scorecard {
   official_id: string;

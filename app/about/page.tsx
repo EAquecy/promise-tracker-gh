@@ -37,7 +37,7 @@ export default function About() {
           </p>
           <h2 className="mt-4 font-display text-2xl font-bold">Your privacy</h2>
           <p>
-            We use your location only to match your area. Your exact position is never stored. You can choose your area by hand instead.
+            Confirming, disputing and commenting need your location. We turn it into a district on our server and keep only that: the first district we ever locate you in (shown as "From"), and the district you comment from. Your exact position is never stored. Each comment is marked Local or Outside this area, so a crowd from elsewhere can't pass as residents. Reading the site never needs location.
           </p>
           <h2 className="mt-4 font-display text-2xl font-bold">Data</h2>
           <p>

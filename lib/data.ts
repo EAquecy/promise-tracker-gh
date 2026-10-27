@@ -7,6 +7,9 @@ export const OFFICIAL_SELECT =
 
 export const POST_SELECT = "*, post_media(*), promises(id, title)";
 
+export const COMMENT_SELECT =
+  "*, origin:districts!comments_origin_district_id_fkey(name), located:districts!comments_located_district_id_fkey(name)";
+
 export async function getViewer(supabase: SupabaseClient, user: User | null): Promise<Viewer | null> {
   if (!user) return null;
   const [{ data: profile }, { data: official }] = await Promise.all([
@@ -24,7 +27,7 @@ export async function loadPostExtras(supabase: SupabaseClient, posts: Post[], us
   if (!ids.length) return { stats: {} as Record<string, PostStats>, comments: {} as Record<string, Comment[]>, mine: {} as Record<string, "confirm" | "dispute"> };
   const [s, c, r] = await Promise.all([
     supabase.from("post_stats").select("*").in("post_id", ids),
-    supabase.from("comments").select("*").in("post_id", ids).order("created_at"),
+    supabase.from("comments").select(COMMENT_SELECT).in("post_id", ids).order("created_at"),
     userId ? supabase.from("reactions").select("post_id, verdict").in("post_id", ids).eq("user_id", userId) : Promise.resolve({ data: [] }),
   ]);
   const stats: Record<string, PostStats> = {};
