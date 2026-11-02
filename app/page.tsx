@@ -67,7 +67,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ r
               <br />
               <span className="text-gh-gold">Did they deliver?</span>
             </h1>
-            <p className="mt-4 max-w-[560px] text-lg leading-relaxed text-[#C9D6CF]">
+            <p className="mt-4 max-w-[560px] text-lg leading-relaxed text-white">
               Track what your MP, DCE, Minister and Assembly Member promised, see the evidence, and confirm it yourself as a resident.
             </p>
             <form role="search" action="/explore" className="mt-6 flex max-w-[620px] flex-wrap gap-2.5">
@@ -75,7 +75,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ r
               <input id="hq" name="q" type="search" placeholder="Enter your district or town" className="h-[52px] min-w-0 flex-[1_1_260px] rounded-full border-0 px-5 text-base text-ink" />
               <button className="btn btn-gold h-[52px] rounded-full px-6 text-base font-bold">Find my officials</button>
             </form>
-            <Link href="/my-area" className="mt-3.5 inline-flex min-h-11 items-center gap-2 text-[15px] font-medium text-[#D5E4DB] no-underline hover:text-white">
+            <Link href="/my-area" className="mt-3.5 inline-flex min-h-11 items-center gap-2 text-[15px] font-medium text-white no-underline hover:text-white">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="3" />
                 <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
@@ -88,7 +88,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ r
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/ghana-regions.svg" alt="Map of Ghana's 16 regions. Opens the explore map" className="block h-auto w-full" />
             </Link>
-            <div className="mt-2 text-center text-[13px] text-[#D5E4DB]">16 regions · 276 constituencies · 261 districts</div>
+            <div className="mt-2 text-center text-[13px] text-white">16 regions · 276 constituencies · 261 districts</div>
           </div>
         </div>
       </section>

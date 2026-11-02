@@ -189,7 +189,7 @@ export default async function PromisePage({ params }: Params) {
 
             <section aria-label="Share" className="rounded-[14px] bg-ink p-5 text-white">
               <h2 className="font-display text-xl font-bold">Spread the record</h2>
-              <p className="mt-2 text-sm leading-normal text-[#C9D6CF]">Share this promise so more residents can check it.</p>
+              <p className="mt-2 text-sm leading-normal text-white">Share this promise so more residents can check it.</p>
               <div className="mt-3.5 flex flex-wrap gap-2.5">
                 <a className="btn btn-gold rounded-full" href={`https://wa.me/?text=${encodeURIComponent(`${promise.title} (${STATUS[promise.status].label}) on Promise Tracker GH`)}`} target="_blank" rel="noreferrer">
                   Share to WhatsApp

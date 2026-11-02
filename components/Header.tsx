@@ -11,7 +11,7 @@ export async function Header({ variant = "light" }: { variant?: "light" | "dark"
     official = data;
   }
   const dark = variant !== "light";
-  const linkCls = dark ? "text-[#D5E4DB] hover:text-white" : "text-[#3E4A44] hover:text-ink";
+  const linkCls = dark ? "text-white hover:text-white" : "text-[#3E4A44] hover:text-ink";
   return (
     <>
       <header className={dark ? "bg-gh-green-dark" : "border-b border-line bg-white"} style={variant === "official" ? { background: "#13201A" } : undefined}>
@@ -34,7 +34,7 @@ export async function Header({ variant = "light" }: { variant?: "light" | "dark"
             ) : null}
             {user ? (
               <form action="/auth/signout" method="post">
-                <button className={`text-sm font-semibold ${dark ? "text-[#D5E4DB]" : "text-muted"}`} type="submit">Sign out</button>
+                <button className={`text-sm font-semibold ${dark ? "text-white" : "text-muted"}`} type="submit">Sign out</button>
               </form>
             ) : (
               <Link href="/login" className={dark ? "btn btn-gold" : "btn btn-ghost"} style={{ borderRadius: 22 }}>Sign in</Link>
