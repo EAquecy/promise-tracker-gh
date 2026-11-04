@@ -72,7 +72,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ r
             </p>
             <form role="search" action="/explore" className="mt-6 flex max-w-[620px] flex-wrap gap-2.5">
               <label htmlFor="hq" className="sr-only">Enter your district or town</label>
-              <input id="hq" name="q" type="search" placeholder="Enter your district or town" className="h-[52px] min-w-0 flex-[1_1_260px] rounded-full border-0 bg-white px-5 text-base text-ink placeholder:text-[#5B6660]" />
+              <input id="hq" name="q" type="search" placeholder="Enter your district or town" style={{ background: "#fff", color: "#13201A" }} className="h-[52px] min-w-0 flex-[1_1_260px] rounded-full border-0 bg-white px-5 text-base text-ink placeholder:text-[#5B6660]" />
               <button className="btn btn-gold h-[52px] rounded-full px-6 text-base font-bold">Find my officials</button>
             </form>
             <Link href="/my-area" className="mt-3.5 inline-flex min-h-11 items-center gap-2 text-[15px] font-medium text-white no-underline hover:text-white">

@@ -39,6 +39,8 @@
   }
 }
 
+/* Components in their own layer so utility classes (rounded-full, bg-white...) can override them. */
+@layer components {
 .card {
   background: #fff;
   border: 1px solid var(--color-line);
@@ -111,6 +113,8 @@
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 6px;
+}
+
 }
 
 .leaflet-container {
