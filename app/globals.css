@@ -91,6 +91,7 @@
 }
 
 .field {
+  color: var(--color-ink);
   width: 100%;
   min-height: 48px;
   box-sizing: border-box;
