@@ -24,17 +24,19 @@
   --color-idle-bg: #eceeed;
 }
 
-html,
-body {
-  background: var(--color-ground);
-  color: var(--color-ink);
-}
-
-a {
-  color: var(--color-gh-green);
-}
-a:hover {
-  color: var(--color-gh-green-dark);
+/* Base styles live in the base layer so utility classes like text-white can override them. */
+@layer base {
+  html,
+  body {
+    background: var(--color-ground);
+    color: var(--color-ink);
+  }
+  a {
+    color: var(--color-gh-green);
+  }
+  a:hover {
+    color: var(--color-gh-green-dark);
+  }
 }
 
 .card {
